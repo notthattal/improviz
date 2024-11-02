@@ -1,30 +1,36 @@
-import boto3
 import json
-import os
+import boto3
 
 def lambda_handler(event, context):
-    # Initialize the ApiGatewayManagementApi client
+    print("Event received:", event)
+
     api_gateway_endpoint = "https://zzmsaapwre.execute-api.us-east-1.amazonaws.com/prod"
     api_gateway = boto3.client("apigatewaymanagementapi", endpoint_url=api_gateway_endpoint)
-    
-    # Get the connection ID and received message
-    connection_id = event["requestContext"]["connectionId"]
-    body = json.loads(event["body"])
 
-    # Check if the action is `sendQuery`
+    # Attempt to parse connection ID and message body
+    try:
+        connection_id = event["requestContext"]["connectionId"]
+        body = json.loads(event["body"])
+        print("Parsed body:", body)
+    except Exception as e:
+        print("Error parsing event:", e)
+        return {"statusCode": 500, "body": "Failed to parse event data"}
+
+    # Check action and process data
     if body.get("action") == "sendQuery":
-        # Process the data and prepare a response
-        modified_data = {
-            "originalQuery": body["data"]["query"],
-            "responseMessage": "Here is your modified data",
-            "timestamp": context.aws_request_id  # Including the request ID for tracking
+        # Add "Hello" after each word in the text
+        original_text = body.get("data", "")
+        modified_text = ' '.join([word + " Hello" for word in original_text.split()])
+
+        response_message = {
+            "message": "Processed text",
+            "originalText": modified_text
         }
 
         try:
-            # Send the modified response back to the client
             api_gateway.post_to_connection(
                 ConnectionId=connection_id,
-                Data=json.dumps(modified_data)
+                Data=json.dumps(response_message)
             )
             return {"statusCode": 200, "body": "Response sent back to client"}
 
@@ -33,7 +39,7 @@ def lambda_handler(event, context):
             return {"statusCode": 410, "body": "Connection closed"}
 
         except Exception as e:
-            print(f"Error sending message back to client: {e}")
-            return {"statusCode": 500, "body": "Failed to send response"}
+            print("Error sending message back to client:", e)
+            return {"statusCode": 500, "body": f"Failed to send response: {str(e)}"}
 
     return {"statusCode": 400, "body": "Unrecognized action"}
