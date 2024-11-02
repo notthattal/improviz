@@ -129,7 +129,25 @@ def generate_like_articles(chunks, documents, client):
     # clusterer = hdbscan.HDBSCAN(min_cluster_size=2, metric='euclidean')
     # cluster_labels = clusterer.fit_predict(embedding_matrix)
 
+def generate_like_articles_2(chunks, topic_list):
+    from sklearn.cluster import KMeans
+    local_model = SentenceTransformer("/model_folder", trust_remote_code=True)
+    embeddings = local_model.encode(chunks)
 
+    similarities = local_model.similarity(embeddings, embeddings)
+    print(similarities.shape)
+
+    kmeans = KMeans(n_clusters=2, random_state=0)
+    kmeans.fit(embeddings)
+    labels = kmeans.labels_
+    centroids = kmeans.cluster_centers_
+
+    df = pd.DataFrame(list(zip(chunks, labels)), columns=['Chunks', 'Labels'])
+    result = df.groupby('label')['chunks'].agg(' '.join).reset_index()
+
+    print(result)
+
+    return result
 
 
 
@@ -159,6 +177,7 @@ def main():
     
     client = OpenAI(api_key=openai_api_key)
     generate_like_articles(chunks, topics_list, client)
+    generate_like_articles_2(chunks, topics_list)
 
 
 if __name__ == "__main__":
