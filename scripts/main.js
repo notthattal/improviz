@@ -1,7 +1,7 @@
 let mediaRecorder;
 let recordingInterval;
 let audioChunks = [];
-const apiKey = "2910a1db0e8845f79923ecbdfdb5fa72";
+const apiKey = "";
 
 document.getElementById('start-button').addEventListener('click', startRecording);
 document.getElementById('stop-button').addEventListener('click', stopRecording);
