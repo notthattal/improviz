@@ -94,24 +94,24 @@ class TranscriptManager {
         card.setAttribute('data-index', index);
 
         const content = document.createElement('div');
-        content.className = 'card-content';
+        content.className = 'card-content flex-col'; // Changed to column layout
 
         let visualization_summaries = [];
         visualizations.forEach((viz, vizIndex) => {
             visualization_summaries.push(viz.summary);
         });
 
-        // Add transcript text
-        const textSection = document.createElement('div');
-        textSection.className = 'card-text';
-        textSection.innerHTML = `
-            <div class="text-lg font-semibold mb-4">Transcript ${index}</div>
-            <div class="text-gray-700">${visualization_summaries.join(' ')}</div>
-        `;
+        // Create summary section at the top
+        const summarySection = document.createElement('div');
+        summarySection.className = 'card-summary mb-4';
+        summarySection.innerHTML = `
+        <div class="text-lg font-semibold mb-2">Summary</div>
+        <div class="text-gray-700">${visualization_summaries.join(' ')}</div>
+    `;
 
-        // Add visualization section
+        // Add visualization section (now larger)
         const vizSection = document.createElement('div');
-        vizSection.className = 'card-visualization';
+        vizSection.className = 'card-visualization flex-grow';
 
         visualizations.forEach((viz, vizIndex) => {
             if (viz.type === "image") {
@@ -122,7 +122,7 @@ class TranscriptManager {
             } else if (viz.type === "plotly") {
                 const plotDiv = document.createElement("div");
                 plotDiv.id = `plotlyChart-${index}-${vizIndex}`;
-                plotDiv.className = "w-full h-full";
+                plotDiv.className = "w-full h-[500px]"; // Increased height
                 vizSection.appendChild(plotDiv);
             } else if (viz.type === "text") {
                 const textDiv = document.createElement("div");
@@ -132,7 +132,7 @@ class TranscriptManager {
             }
         });
 
-        content.appendChild(textSection);
+        content.appendChild(summarySection);
         content.appendChild(vizSection);
         card.appendChild(content);
 
