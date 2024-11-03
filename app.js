@@ -114,27 +114,26 @@ let recordingInterval;
 let audioChunks = [];
 let isRecording = false;
 
-async function fetchVisualization(data) {
-    console.log("test");
-    const response = await fetch('http://127.0.0.1:8080/execute', {
+async function fetchVisualization() {
+    // Send request to Flask server's /execute endpoint
+    const response = await fetch('http://127.0.0.1:5000/execute', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)  // Pass the data to be processed
+        body: JSON.stringify([["Linear regression is a statistical method used to model the relationship between a dependent variable and one or more independent variables. By fitting a line through data points, it predicts the dependent variable's values based on known values of the independent variables, minimizing prediction error through least squares.",
+      "Linear regression is widely used in various fields, such as finance, economics, and machine learning. It helps predict trends, like stock prices or sales, and assess how factors influence outcomes. The simplicity and interpretability of linear regression make it a valuable tool for predictive analysis and forecasting."],
+      ["Linear regression can be simple or multiple. Simple linear regression involves one independent variable predicting one dependent variable. Multiple linear regression, however, includes several independent variables. This approach is more complex but allows for a better understanding of how multiple factors jointly affect an outcome.",
+      "Linear regression requires certain assumptions: linearity, independence, homoscedasticity (equal variance of residuals), and normality of errors. If assumptions are violated, predictions may become unreliable. Analysts often test these assumptions through statistical diagnostics, as unaddressed issues can compromise the validity of a linear regression model.",
+      "Linear regression works well for relationships that are linear. However, it struggles with non-linear relationships, multicollinearity, and outliers, which can skew results. Advanced regression methods, such as polynomial regression or regularization techniques like ridge and lasso, help address these limitations and improve predictive accuracy."]
+      ])
     });
-
-    if (!response.ok) {
-        console.error('Error calling execute:', response.statusText);
-        return;
-    }
-
-    const responseData = await response.json();
-    console.log(responseData);
+    
+    const data = await response.json();
+    console.log(data);
 
     const vizContainer = document.getElementById("visualization");
-    vizContainer.innerHTML = "";  // Clear previous content
 
     // Iterate through each visualization in the response data
-    responseData.forEach((viz, index) => {
+    data.forEach((viz, index) => {
         if (viz.type === "image") {
             const img = document.createElement("img");
             img.src = viz.data;  // The base64 image string

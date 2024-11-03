@@ -7,7 +7,11 @@ import plotly.express as px
 import json
 import openai
 import os
+from flask import Flask, request, jsonify, Response
+from flask_cors import CORS
 
+app = Flask(__name__)
+CORS(app)
 matplotlib.use('Agg')
 
 def convert_ndarray(obj):
@@ -68,9 +72,15 @@ message = (
 openai.api_key = os.getenv("OPENAI_API_KEY")
 client = openai.OpenAI()
 
-def execute(data):
+@app.route('/execute', methods=['POST'])
+def execute():
+    data = request.get_json()  # Receive JSON input
+    if not isinstance(data, list) or not all(isinstance(item, list) for item in data):
+        return jsonify({"error": "Invalid input format. Expecting a list of lists."}), 400
+
     results = []
-    for prompt in data:
+    for example in data:
+        prompt = ' '.join(example)
         completion = client.chat.completions.create(
             model="gpt-4o-mini",
             messages=[
@@ -86,4 +96,10 @@ def execute(data):
         response = completion.choices[0].message.content
         results.append(process_response(response))
 
-    return json.dumps(results, ensure_ascii=False)
+    return Response(
+        json.dumps(results, ensure_ascii=False),
+        content_type="application/json"
+    )
+
+if __name__ == '__main__':
+    app.run()

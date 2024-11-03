@@ -7,3 +7,4 @@ statsmodels
 flask
 flask_cors
 openai
+plotly
