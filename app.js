@@ -4,11 +4,11 @@ let recordingInterval;
 let audioChunks = [];
 let isRecording = false;
 let wordCount = 0;
-let transcriptHistory = [];
 let waveformInterval;
+let currentVisualizationIndex = 0;
 
 class TranscriptManager {
-    constructor(wordThreshold = 40) {
+    constructor(wordThreshold = 30) {
         this.wordThreshold = wordThreshold;
         this.transcripts = [];
         this.totalWords = 0;
@@ -20,38 +20,24 @@ class TranscriptManager {
         const words = text.trim().split(/\s+/).length;
         this.totalWords += words;
 
+        // Add to live transcript panel with appropriate styling
+        window.addTranscriptChunk(text);
+
         console.log(`Added transcript. Total words: ${this.totalWords}`);
 
         if (this.totalWords >= this.wordThreshold) {
             this.generateVisualization();
         }
     }
-    
-    insertNewSection(vizContainer, newSection, visualizationCount) {
-        // Add divider if there are multiple visualizations
-        if (visualizationCount > 1) {
-            const divider = document.createElement('hr');
-            divider.className = 'my-8 border-t border-gray-200';
-            vizContainer.insertBefore(divider, vizContainer.firstChild);
-        }
-    
-        // Insert the new section at the top
-        vizContainer.insertBefore(newSection, vizContainer.firstChild);
-    }
 
     async generateVisualization() {
         try {
-            // Get all transcripts as one array
             const allTranscripts = this.transcripts;
-
-            // Reset for next batch
             this.transcripts = [];
             this.totalWords = 0;
 
-            // Update status
             document.getElementById('status').innerText = "Generating visualization...";
 
-            // Send request to Flask server
             const response = await fetch('http://127.0.0.1:5000/execute', {
                 method: 'POST',
                 headers: {
@@ -59,7 +45,7 @@ class TranscriptManager {
                 },
                 body: JSON.stringify(allTranscripts)
             });
-            console.log(allTranscripts)
+
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
@@ -67,61 +53,82 @@ class TranscriptManager {
             const data = await response.json();
             console.log('Visualization data:', data);
 
-            // Create a new visualization section
+            // Create new visualization card
             this.visualizationCount++;
             const vizContainer = document.getElementById("visualization");
-            const newSection = document.createElement('div');
-            newSection.className = 'visualization-section mb-8 p-4 bg-white rounded-lg shadow';
+            const newCard = this.createVisualizationCard(allTranscripts, data, this.visualizationCount);
 
-            // Add section header with timestamp
-            const header = document.createElement('div');
-            header.className = 'text-lg font-semibold text-primary mb-4';
-            const timestamp = new Date().toLocaleTimeString();
-            header.textContent = `Visualization ${this.visualizationCount} (${timestamp})`;
-            newSection.appendChild(header);
+            // Insert the new card at the beginning of the stack
+            if (vizContainer.firstChild) {
+                vizContainer.insertBefore(newCard, vizContainer.firstChild);
+            } else {
+                vizContainer.appendChild(newCard);
+            }
 
-            // Render new visualizations in this section
-            data.forEach((viz, index) => {
-                // Add transcript for this section
-                const transcriptSection = document.createElement('div');
-                transcriptSection.className = 'mb-4 p-3 bg-gray-50 rounded';
-                transcriptSection.innerHTML = `<div class="font-medium mb-2">Transcript:</div>
-                                            <div class="text-sm text-gray-600">${viz.summary}</div>`;
-                newSection.appendChild(transcriptSection);
-
-                if (viz.type === "image") {
-                    const img = document.createElement("img");
-                    img.src = viz.data;
-                    img.className = "w-full max-w-2xl mx-auto my-4";
-                    newSection.appendChild(img);
-                    this.insertNewSection(vizContainer, newSection, this.visualizationCount);
-                } else if (viz.type === "plotly") {
-                    const plotDiv = document.createElement("div");
-                    plotDiv.id = `plotlyChart-${this.visualizationCount}-${index}`;
-                    plotDiv.className = "w-full max-w-2xl mx-auto my-4";
-                    newSection.appendChild(plotDiv);
-                    this.insertNewSection(vizContainer, newSection, this.visualizationCount);
-                    Plotly.newPlot(plotDiv.id, viz.data, viz.layout);
-                } else if (viz.type === "text") {
-                    const textDiv = document.createElement("div");
-                    textDiv.className = "p-4 bg-gray-50 rounded my-4";
-                    textDiv.innerText = viz.data;
-                    newSection.appendChild(textDiv);
-                    this.insertNewSection(vizContainer, newSection, this.visualizationCount);
-                }
-            });
+            // Update card positions
+            currentVisualizationIndex = 0;
+            window.updateCardPositions();
 
             // Update status
             document.getElementById('status').innerText = isRecording ?
                 "Recording..." : "Recording stopped. Visualization generated.";
 
-            // Scroll to the new visualization smoothly
-            newSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-
         } catch (error) {
             console.error('Error generating visualization:', error);
             document.getElementById('status').innerText = "Error generating visualization.";
         }
+    }
+
+    createVisualizationCard(transcripts, visualizations, index) {
+        const card = document.createElement('div');
+        card.className = 'visualization-card';
+        card.setAttribute('data-index', index);
+
+        const content = document.createElement('div');
+        content.className = 'card-content';
+
+        let visualization_summaries = [];
+        visualizations.forEach((viz, vizIndex) => {
+            visualization_summaries.push(viz.summary);
+        });
+
+        // Add transcript text
+        const textSection = document.createElement('div');
+        textSection.className = 'card-text';
+        textSection.innerHTML = `
+            <div class="text-lg font-semibold mb-4">Transcript ${index}</div>
+            <div class="text-gray-700">${visualization_summaries.join(' ')}</div>
+        `;
+
+        // Add visualization section
+        const vizSection = document.createElement('div');
+        vizSection.className = 'card-visualization';
+
+        visualizations.forEach((viz, vizIndex) => {
+            if (viz.type === "image") {
+                const img = document.createElement("img");
+                img.src = viz.data;
+                img.className = "w-full rounded-lg shadow-sm";
+                vizSection.appendChild(img);
+            } else if (viz.type === "plotly") {
+                const plotDiv = document.createElement("div");
+                plotDiv.id = `plotlyChart-${index}-${vizIndex}`;
+                plotDiv.className = "w-full h-full";
+                vizSection.appendChild(plotDiv);
+                Plotly.newPlot(plotDiv.id, viz.data, viz.layout);
+            } else if (viz.type === "text") {
+                const textDiv = document.createElement("div");
+                textDiv.className = "p-4 bg-gray-50 rounded-lg";
+                textDiv.innerText = viz.data;
+                vizSection.appendChild(textDiv);
+            }
+        });
+
+        content.appendChild(textSection);
+        content.appendChild(vizSection);
+        card.appendChild(content);
+
+        return card;
     }
 
     getWordCount() {
@@ -134,27 +141,60 @@ class TranscriptManager {
 }
 
 // Create transcript manager instance
-const transcriptManager = new TranscriptManager(50);
+const transcriptManager = new TranscriptManager(30);
 
 document.addEventListener('DOMContentLoaded', () => {
     const recordButton = document.getElementById('record-button');
 
+    initializeRecordButton(recordButton);
+});
+
+function initializeRecordButton(recordButton) {
     recordButton.addEventListener('click', () => {
         if (!isRecording) {
             startRecording();
             recordButton.classList.add('recording');
+            showWaveform(true);
         } else {
             stopRecording();
             recordButton.classList.remove('recording');
+            showWaveform(false);
         }
     });
+}
 
-    // Remove the visualize button since it's now automatic
-    const executeButton = document.getElementById('execute-button');
-    if (executeButton) {
-        executeButton.remove();
+function showWaveform(show) {
+    const recordButton = document.getElementById('record-button');
+    const micIcon = recordButton.querySelector('.mic-icon');
+    const waveform = recordButton.querySelector('.waveform');
+
+    micIcon.style.display = show ? 'none' : 'block';
+    waveform.style.display = show ? 'flex' : 'none';
+
+    if (show) {
+        startWaveformAnimation();
+    } else {
+        stopWaveformAnimation();
     }
-});
+}
+
+function startWaveformAnimation() {
+    const waveform = document.querySelector('.waveform');
+    waveformInterval = setInterval(() => {
+        const bars = waveform.querySelectorAll('.waveform-bar');
+        bars.forEach(bar => {
+            const height = Math.random() * 30 + 10;
+            bar.style.height = `${height}px`;
+        });
+    }, 150);
+}
+
+function stopWaveformAnimation() {
+    if (waveformInterval) {
+        clearInterval(waveformInterval);
+        waveformInterval = null;
+    }
+}
 
 async function startRecording() {
     try {
@@ -162,24 +202,6 @@ async function startRecording() {
         mediaRecorder = new MediaRecorder(stream);
         audioChunks = [];
         isRecording = true;
-
-        // Update UI for recording state
-        const recordButton = document.getElementById('record-button');
-        const micIcon = recordButton.querySelector('.mic-icon');
-        const waveform = recordButton.querySelector('.waveform');
-
-        recordButton.classList.add('recording');
-        micIcon.style.display = 'none';
-        waveform.style.display = 'flex';
-
-        // Animate waveform
-        waveformInterval = setInterval(() => {
-            const bars = waveform.querySelectorAll('.waveform-bar');
-            bars.forEach(bar => {
-                const height = Math.random() * 30 + 10;
-                bar.style.height = `${height}px`;
-            });
-        }, 150);
 
         mediaRecorder.ondataavailable = event => {
             audioChunks.push(event.data);
@@ -216,16 +238,10 @@ async function startRecording() {
 
 function stopRecording() {
     isRecording = false;
-    resetRecordButton();
 
     if (recordingInterval) {
         clearInterval(recordingInterval);
         recordingInterval = null;
-    }
-
-    if (waveformInterval) {
-        clearInterval(waveformInterval);
-        waveformInterval = null;
     }
 
     if (mediaRecorder && mediaRecorder.state !== 'inactive') {
@@ -237,17 +253,13 @@ function stopRecording() {
     }
 
     document.getElementById('status').innerText = "Recording stopped.";
+    resetRecordButton();
 }
 
-// Add this new helper function
 function resetRecordButton() {
     const recordButton = document.getElementById('record-button');
-    const micIcon = recordButton.querySelector('.mic-icon');
-    const waveform = recordButton.querySelector('.waveform');
-
     recordButton.classList.remove('recording');
-    micIcon.style.display = 'block';
-    waveform.style.display = 'none';
+    showWaveform(false);
 }
 
 async function transcribeAudio(blob) {
@@ -304,15 +316,14 @@ async function transcribeAudio(blob) {
         }
 
         if (transcript.text && transcript.text.trim()) {
-            const transcriptDiv = document.getElementById('transcript');
-            transcriptDiv.innerText += `\nTranscript: ${transcript.text}`;
-
             // Add to transcript manager
             transcriptManager.addTranscript(transcript.text);
 
             // Update progress status
             const progress = transcriptManager.getProgress();
-            document.getElementById('status').innerText = `Recording... (${Math.round(progress)}% to next visualization)`;
+            document.getElementById('status').innerText = isRecording ?
+                `Recording... (${Math.round(progress)}% to next visualization)` :
+                "Recording stopped.";
         }
 
     } catch (error) {
