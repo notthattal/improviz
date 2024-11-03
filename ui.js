@@ -1,3 +1,5 @@
+// UI.js
+
 const lectureTopics = [
     {
         id: 1,
@@ -30,6 +32,10 @@ let selectedTopicId = null;
 let isMobile = window.innerWidth <= 768;
 let currentCardIndex = 0;
 let transcriptChunks = [];
+
+// Add these two variables for the typing queue
+let typingQueue = [];
+let isTyping = false;
 
 // Initialize UI
 document.addEventListener('DOMContentLoaded', () => {
@@ -261,10 +267,24 @@ function updateMainPanel(topic) {
 
 // Export functions for use in app.js
 window.addTranscriptChunk = function(text, status = 'current') {
+    // Add the new transcript to the typing queue
+    typingQueue.push({ text, status });
+    processTypingQueue();
+};
+
+function processTypingQueue() {
+    // If typing is already in progress or queue is empty, do nothing
+    if (isTyping || typingQueue.length === 0) {
+        return;
+    }
+    isTyping = true;
+
+    // Get the next transcript from the queue
+    const { text, status } = typingQueue.shift();
+
     const transcriptContainer = document.getElementById('transcript');
     const chunk = document.createElement('div');
     chunk.className = `transcript-chunk transcript-${status}`;
-    chunk.textContent = text;
 
     // Update previous chunks' status
     const existingChunks = transcriptContainer.children;
@@ -280,6 +300,33 @@ window.addTranscriptChunk = function(text, status = 'current') {
 
     transcriptContainer.appendChild(chunk);
     transcriptContainer.scrollTop = transcriptContainer.scrollHeight;
-};
+
+    // Implement typing animation with a callback
+    typeText(chunk, text, 50, () => {
+        isTyping = false;
+        // After typing is done, process the next item in the queue
+        processTypingQueue();
+    });
+}
+
+function typeText(element, text, delay, callback) {
+    let index = 0;
+    function addChar() {
+        if (index < text.length) {
+            element.textContent += text.charAt(index);
+            index++;
+            setTimeout(addChar, delay);
+            // Keep the transcript scrolled to the bottom
+            const transcriptContainer = document.getElementById('transcript');
+            transcriptContainer.scrollTop = transcriptContainer.scrollHeight;
+        } else {
+            // Call the callback function once typing is complete
+            if (callback) {
+                callback();
+            }
+        }
+    }
+    addChar();
+}
 
 window.updateCardPositions = updateCardPositions;

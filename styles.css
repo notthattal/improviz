@@ -38,7 +38,6 @@
     width: 64px !important;
 }
 
-/* Transcript Panel */
 .transcript-panel {
     position: fixed;
     right: 0;
@@ -47,9 +46,17 @@
     height: 100vh;
     background-color: white;
     border-left: 1px solid #e2e8f0;
-    overflow-y: auto;
-    scrollbar-width: thin;
-    scrollbar-color: var(--secondary) #f0f4f8;
+    display: flex;
+    flex-direction: column;
+}
+
+.transcript-panel .p-4 {
+    flex: 1;
+    overflow-y: auto; /* Enable scrolling */
+}
+
+#transcript {
+    /* Remove any max-height or height restrictions */
 }
 
 .transcript-panel::-webkit-scrollbar {
@@ -266,15 +273,6 @@
 
     .panel-collapsed {
         transform: translateY(calc(100% - 64px));
-    }
-
-    .transcript-panel {
-        position: fixed;
-        top: 0;
-        right: 0;
-        width: 100%;
-        height: 30vh;
-        transform: translateY(-100%);
     }
 
     .transcript-panel.show {
