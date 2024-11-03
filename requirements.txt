@@ -12,3 +12,5 @@ sentence-transformers
 textrazor
 wordcloud
 hdbscan
+sentence_transformers
+textrazor
