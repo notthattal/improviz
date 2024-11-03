@@ -80,15 +80,15 @@ class TranscriptManager {
             header.textContent = `Visualization ${this.visualizationCount} (${timestamp})`;
             newSection.appendChild(header);
 
-            // Add transcript for this section
-            const transcriptSection = document.createElement('div');
-            transcriptSection.className = 'mb-4 p-3 bg-gray-50 rounded';
-            transcriptSection.innerHTML = `<div class="font-medium mb-2">Transcript:</div>
-                                         <div class="text-sm text-gray-600">${allTranscripts.join(' ')}</div>`;
-            newSection.appendChild(transcriptSection);
-
             // Render new visualizations in this section
             data.forEach((viz, index) => {
+                // Add transcript for this section
+                const transcriptSection = document.createElement('div');
+                transcriptSection.className = 'mb-4 p-3 bg-gray-50 rounded';
+                transcriptSection.innerHTML = `<div class="font-medium mb-2">Transcript:</div>
+                                            <div class="text-sm text-gray-600">${viz.summary}</div>`;
+                newSection.appendChild(transcriptSection);
+
                 if (viz.type === "image") {
                     const img = document.createElement("img");
                     img.src = viz.data;
