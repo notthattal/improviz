@@ -77,9 +77,6 @@ def get_visualizations_json(data):
     prompt = data[0]
     prompt = ' '.join(prompt)
 
-    
-
-
     completion = client.chat.completions.create(
         model="gpt-4o-mini",
         messages=[
