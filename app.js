@@ -65,6 +65,15 @@ class TranscriptManager {
                 vizContainer.appendChild(newCard);
             }
 
+            data.forEach((viz, vizIndex) => {
+                if (viz.type === "plotly") {
+                    const plotDiv = document.getElementById(`plotlyChart-${this.visualizationCount}-${vizIndex}`);
+                    Plotly.newPlot(plotDiv.id, viz.data, viz.layout, { responsive: true }).then(() => {
+                        Plotly.Plots.resize(plotDiv.id);
+                    });
+                }
+            });
+
             // Update card positions
             currentVisualizationIndex = 0;
             window.updateCardPositions();
@@ -115,7 +124,6 @@ class TranscriptManager {
                 plotDiv.id = `plotlyChart-${index}-${vizIndex}`;
                 plotDiv.className = "w-full h-full";
                 vizSection.appendChild(plotDiv);
-                Plotly.newPlot(plotDiv.id, viz.data, viz.layout);
             } else if (viz.type === "text") {
                 const textDiv = document.createElement("div");
                 textDiv.className = "p-4 bg-gray-50 rounded-lg";
