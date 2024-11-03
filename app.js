@@ -127,14 +127,14 @@ async function fetchVisualization(data) {
         return;
     }
 
-    const data = await response.json();
-    console.log(data);
+    const responseData = await response.json();
+    console.log(responseData);
 
     const vizContainer = document.getElementById("visualization");
     vizContainer.innerHTML = "";  // Clear previous content
 
     // Iterate through each visualization in the response data
-    data.forEach((viz, index) => {
+    responseData.forEach((viz, index) => {
         if (viz.type === "image") {
             const img = document.createElement("img");
             img.src = viz.data;  // The base64 image string
