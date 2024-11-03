@@ -63,19 +63,21 @@ valid_packages = ['matplotlib', 'plotly', 'pandas', 'numpy', 'scikit-learn', 'se
 openai.api_key = os.getenv("OPENAI_API_KEY")
 client = openai.OpenAI()
 
+message = (
+    f"You are an assistant that can only do two things." 
+    f"Summarize the following text, fixing any spelling mistakes and making it a complete sentence. "
+    f"Do not mention that this is a prompt or request. Use only the information provided: content and say it as a description of vizualisation that will be generated. Do not mention about the python code"
+    f"Second. You must return Python code that properly generates one of these types of graphs: "
+    f"{', '.join(valid_visualizers)} and you can only use these packages for creating the graph {', '.join(valid_packages)}. You must choose the most appropriate visualization to create given the following prompt."
+    f"If possible create interactive plotly graphs, but we want a mix of plotly and other types of graphs."
+    )
+
 def get_visualizations_json(data):
     results = []
     prompt = data[0]
     prompt = ' '.join(prompt)
 
-    message = (
-    f"You are an assistant that can only do two things." 
-    f"Summarize the following text, fixing any spelling mistakes and making it a complete sentence. "
-    f"Do not mention that this is a prompt or request. Use only the information provided: {prompt} and say it as a description of vizualisation that will be generated. Do not mention about the python code"
-    f"Second. You must return Python code that properly generates one of these types of graphs: "
-    f"{', '.join(valid_visualizers)} and you can only use these packages for creating the graph {', '.join(valid_packages)}. You must choose the most appropriate visualization to create given the following prompt."
-    f"If possible create interactive plotly graphs, but we want a mix of plotly and other types of graphs."
-    )
+    
 
 
     completion = client.chat.completions.create(
