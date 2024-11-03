@@ -1,13 +1,14 @@
-const apiKey = "2910a1db0e8845f79923ecbdfdb5fa72";
+const apiKey = "5c1d6279cd29445e85d219fd7626b7d7";
 let mediaRecorder;
 let recordingInterval;
 let audioChunks = [];
 let isRecording = false;
 let wordCount = 0;
 let transcriptHistory = [];
+let waveformInterval;
 
 class TranscriptManager {
-    constructor(wordThreshold = 50) {
+    constructor(wordThreshold = 40) {
         this.wordThreshold = wordThreshold;
         this.transcripts = [];
         this.totalWords = 0;
@@ -44,9 +45,9 @@ class TranscriptManager {
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify([allTranscripts])
+                body: JSON.stringify(allTranscripts)
             });
-
+            console.log(allTranscripts)
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
@@ -157,6 +158,24 @@ async function startRecording() {
         audioChunks = [];
         isRecording = true;
 
+        // Update UI for recording state
+        const recordButton = document.getElementById('record-button');
+        const micIcon = recordButton.querySelector('.mic-icon');
+        const waveform = recordButton.querySelector('.waveform');
+
+        recordButton.classList.add('recording');
+        micIcon.style.display = 'none';
+        waveform.style.display = 'flex';
+
+        // Animate waveform
+        waveformInterval = setInterval(() => {
+            const bars = waveform.querySelectorAll('.waveform-bar');
+            bars.forEach(bar => {
+                const height = Math.random() * 30 + 10;
+                bar.style.height = `${height}px`;
+            });
+        }, 150);
+
         mediaRecorder.ondataavailable = event => {
             audioChunks.push(event.data);
         };
@@ -186,16 +205,22 @@ async function startRecording() {
         console.error("Error starting recording:", error);
         document.getElementById('status').innerText = "Error starting recording.";
         isRecording = false;
-        document.getElementById('record-button').classList.remove('recording');
+        resetRecordButton();
     }
 }
 
 function stopRecording() {
     isRecording = false;
+    resetRecordButton();
 
     if (recordingInterval) {
         clearInterval(recordingInterval);
         recordingInterval = null;
+    }
+
+    if (waveformInterval) {
+        clearInterval(waveformInterval);
+        waveformInterval = null;
     }
 
     if (mediaRecorder && mediaRecorder.state !== 'inactive') {
@@ -207,6 +232,17 @@ function stopRecording() {
     }
 
     document.getElementById('status').innerText = "Recording stopped.";
+}
+
+// Add this new helper function
+function resetRecordButton() {
+    const recordButton = document.getElementById('record-button');
+    const micIcon = recordButton.querySelector('.mic-icon');
+    const waveform = recordButton.querySelector('.waveform');
+
+    recordButton.classList.remove('recording');
+    micIcon.style.display = 'block';
+    waveform.style.display = 'none';
 }
 
 async function transcribeAudio(blob) {
