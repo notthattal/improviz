@@ -10,6 +10,7 @@ import visualizer
 from flask import Flask, request, jsonify, Response
 import textrazor
 from flask_cors import CORS
+from dotenv import load_dotenv
 
 app = Flask(__name__)
 CORS(app)
@@ -26,8 +27,9 @@ def setup():
 
 def generate_topic_list(chunks):
     # Bypass SSL certificate verification
+    load_dotenv()
     ssl._create_default_https_context = ssl._create_unverified_context
-    textrazor_api_key = os.getenv("TEXT_RAZOR_API_KEY")
+    textrazor_api_key = os.getenv('TEXTRAZOR_KEY')
     textrazor.api_key = textrazor_api_key
 
 
@@ -90,6 +92,7 @@ def generate_like_articles(chunks, documents, client):
     plt.show()
 
 def generate_like_articles_2(chunks, topic_list):
+    load_dotenv()
     from sklearn.cluster import KMeans
     local_model = SentenceTransformer("./model_folder", trust_remote_code=True, device="cpu", config_kwargs={"use_memory_efficient_attention": False, "unpad_inputs": False})
     embeddings = local_model.encode(chunks)

@@ -7,6 +7,7 @@ import plotly.express as px
 import json
 import openai
 import os
+from dotenv import load_dotenv
 
 matplotlib.use('Agg')
 
@@ -64,8 +65,8 @@ message = (
     f"{', '.join(valid_visualizers)} and you can only use these packages for creating the graph {', '.join(valid_packages)}. You must choose the most appropriate visualization to create given the following prompt."
     f"If possible create interactive plotly graphs, but we want a mix of plotly and other types of graphs."
 )
-
-openai.api_key = os.getenv("OPENAI_API_KEY")
+load_dotenv()
+openai.api_key = os.getenv('OPENAI_KEY')
 client = openai.OpenAI()
 
 def get_visualizations_json(data):

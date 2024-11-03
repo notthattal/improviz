@@ -134,7 +134,7 @@ class TranscriptManager {
 }
 
 // Create transcript manager instance
-const transcriptManager = new TranscriptManager(50);
+const transcriptManager = new TranscriptManager(10);
 
 document.addEventListener('DOMContentLoaded', () => {
     const recordButton = document.getElementById('record-button');
