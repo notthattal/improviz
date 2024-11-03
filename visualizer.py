@@ -70,21 +70,21 @@ client = openai.OpenAI()
 
 def get_visualizations_json(data):
     results = []
-    for example in data:
-        prompt = ' '.join(example)
-        completion = client.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=[
-                {"role": "system", "content": message},
-                {
-                    "role": "user",
-                    "content": prompt
-                }
-            ]
-        )
+    prompt = data[0]
+    prompt = ' '.join(prompt)
+    completion = client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=[
+            {"role": "system", "content": message},
+            {
+                "role": "user",
+                "content": prompt
+            }
+        ]
+    )
 
-        # Execute and get code from response
-        response = completion.choices[0].message.content
-        results.append(process_response(response))
+    # Execute and get code from response
+    response = completion.choices[0].message.content
+    results.append(process_response(response))
 
     return results
