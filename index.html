@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lecture Recorder</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="flex flex-col md:flex-row h-screen">
+    <!-- Left Panel / Mobile Bottom Drawer -->
+    <div id="leftPanel" class="side-panel bg-white shadow-lg panel-transition" style="width: 300px;">
+        <div class="drawer-handle"></div>
+        <div class="panel-header p-4 flex justify-between items-center">
+            <h1 class="text-xl font-bold panel-content">Lecture Topics</h1>
+            <button id="togglePanel" class="p-2 hover:bg-opacity-20 hover:bg-white rounded panel-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+            </button>
+        </div>
+        <div class="p-4 space-y-4 overflow-y-auto panel-content" id="cardContainer">
+            <!-- Cards will be inserted here -->
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content flex-1 p-4 md:p-6" style="background-color: var(--background)">
+        <div class="mb-6 flex justify-between items-center">
+            <h2 class="text-xl md:text-2xl font-bold text-primary" id="mainTitle">Select a Topic</h2>
+        </div>
+
+        <!-- Status indicator -->
+        <div id="status" class="mb-4 text-gray-600 font-medium"></div>
+
+        <!-- Transcript container -->
+        <div class="transcript-container p-4 md:p-6">
+            <h3 class="text-lg font-semibold mb-4 text-primary">Transcript</h3>
+            <div id="transcript" class="whitespace-pre-wrap font-mono text-sm"></div>
+            <div class="visualization-container mt-4">
+                <div id="visualization"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Record Button -->
+    <div id="record-button" class="record-button">
+        <div class="mic-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+            </svg>
+        </div>
+        <div class="waveform" style="display: none;">
+            <div class="waveform-bar"></div>
+            <div class="waveform-bar"></div>
+            <div class="waveform-bar"></div>
+            <div class="waveform-bar"></div>
+            <div class="waveform-bar"></div>
+            <div class="waveform-bar"></div>
+            <div class="waveform-bar"></div>
+            <div class="waveform-bar"></div>
+        </div>
+    </div>
+</div>
+
+<script src="app.js"></script>
+<script src="ui.js"></script>
+</body>
+</html>
