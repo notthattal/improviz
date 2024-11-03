@@ -11,3 +11,4 @@ package.json
 openai_api.txt
 node_modules/
 __pycache__/
+config.js
