@@ -7,6 +7,7 @@ import plotly.express as px
 import json
 import openai
 import os
+import re
 
 matplotlib.use('Agg')
 
@@ -60,7 +61,8 @@ valid_visualizers = [
 valid_packages = ['matplotlib', 'plotly', 'pandas', 'numpy', 'scikit-learn', 'seaborn', 'statsmodels']
 
 message = (
-    f"You are an assistant that can only return Python code that properly generates one of these types of graphs: "
+    f"You are an assistant that can only do two things. First you must paraphrase the prompt. Nothing more than paraphrasing the exact words being said other than spelling fixes and making it a complete sentence. You may not mention anything about a prompt, request, nothing. Imagine you can only use the words being stated in the prompt, but you must fix spelling mistakes."
+    f"Second. You must return Python code that properly generates one of these types of graphs: "
     f"{', '.join(valid_visualizers)} and you can only use these packages for creating the graph {', '.join(valid_packages)}. You must choose the most appropriate visualization to create given the following prompt."
     f"If possible create interactive plotly graphs, but we want a mix of plotly and other types of graphs."
 )
@@ -85,6 +87,19 @@ def get_visualizations_json(data):
 
     # Execute and get code from response
     response = completion.choices[0].message.content
-    results.append(process_response(response))
+
+    code_text = re.search(r"```python(.*?)```", response, re.DOTALL)
+
+    # Extract summary and code
+    if code_text:
+        summary = response[:code_text.start()].strip()
+        code = code_text.group(0).strip()
+    else:
+        summary = response
+        code = ""
+
+    visualization_result = process_response(code)
+    visualization_result["summary"] = summary
+    results.append(visualization_result)
 
     return results
