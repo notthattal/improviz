@@ -1,0 +1,12 @@
+.DS_Store
+/venv
+/openai_visualizer/.DS_Store
+/model_folder
+/openai_visualizer/__pycache__
+openai_visualizer/__pycache__/visualizer.cpython-39.pyc
+/model_test
+text_razor_api.txt
+package-lock.json
+package.json
+openai_api.txt
+node_modules/
