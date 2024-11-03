@@ -8,3 +8,6 @@ flask
 flask_cors
 openai
 plotly
+sentence-transformers
+textrazor
+wordcloud
