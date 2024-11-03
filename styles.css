@@ -38,6 +38,7 @@
     width: 64px !important;
 }
 
+/* Transcript Panel Styles */
 .transcript-panel {
     position: fixed;
     right: 0;
@@ -48,28 +49,36 @@
     border-left: 1px solid #e2e8f0;
     display: flex;
     flex-direction: column;
+    overflow: hidden;
+    z-index: 10;
 }
 
 .transcript-panel .p-4 {
     flex: 1;
-    overflow-y: auto; /* Enable scrolling */
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
 }
 
 #transcript {
-    /* Remove any max-height or height restrictions */
+    flex: 1;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--secondary) #f0f4f8;
+    padding-right: 0.5rem;
 }
 
-.transcript-panel::-webkit-scrollbar {
-    width: 6px;
+#transcript::-webkit-scrollbar {
+    width: 4px;
 }
 
-.transcript-panel::-webkit-scrollbar-track {
+#transcript::-webkit-scrollbar-track {
     background: #f0f4f8;
 }
 
-.transcript-panel::-webkit-scrollbar-thumb {
+#transcript::-webkit-scrollbar-thumb {
     background-color: var(--secondary);
-    border-radius: 3px;
+    border-radius: 2px;
 }
 
 /* Transcript Text Styles */
@@ -98,6 +107,7 @@
     position: relative;
     height: calc(100vh - 12rem);
     perspective: 1000px;
+    padding: 0 2rem;
 }
 
 .visualization-stack {
@@ -109,31 +119,39 @@
 .visualization-card {
     position: absolute;
     width: 100%;
-    height: 100%;
+    height: calc(100% - 2rem);
     background: white;
     border-radius: 0.75rem;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     padding: 1.5rem;
     transition: all 0.5s ease;
+    overflow: hidden;
 }
 
 .card-content {
     display: flex;
+    flex-direction: column;
     height: 100%;
-    gap: 2rem;
+    gap: 1rem;
 }
 
-.card-text {
-    flex: 1;
-    min-width: 300px;
+.card-summary {
+    flex-shrink: 0;
+    padding: 1rem;
+    background: #f8fafc;
+    border-radius: 0.5rem;
+    margin-bottom: 1rem;
+    max-height: 30%;
     overflow-y: auto;
 }
 
 .card-visualization {
-    flex: 2;
+    flex-grow: 1;
     display: flex;
     flex-direction: column;
     justify-content: center;
+    min-height: 0;
+    height: 70%;
 }
 
 .visualization-card.active {
@@ -253,6 +271,23 @@
     }
 }
 
+/* Topic Cards */
+.card {
+    background: white;
+    transition: all 0.2s ease;
+    border-left: 4px solid transparent;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.card.selected {
+    border-left-color: var(--primary);
+    background-color: rgba(44, 82, 130, 0.1);
+}
+
 /* Mobile Responsiveness */
 @media (max-width: 768px) {
     .main-content {
@@ -273,6 +308,15 @@
 
     .panel-collapsed {
         transform: translateY(calc(100% - 64px));
+    }
+
+    .transcript-panel {
+        position: fixed;
+        top: 0;
+        right: 0;
+        width: 100%;
+        height: 30vh;
+        transform: translateY(-100%);
     }
 
     .transcript-panel.show {
@@ -303,5 +347,13 @@
     .nav-arrow {
         top: auto;
         bottom: 120px;
+    }
+
+    .card-summary {
+        max-height: 40%;
+    }
+
+    .card-visualization {
+        height: 60%;
     }
 }
