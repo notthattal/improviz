@@ -131,7 +131,8 @@ def generate_like_articles(chunks, documents, client):
 
 def generate_like_articles_2(chunks, topic_list):
     from sklearn.cluster import KMeans
-    local_model = SentenceTransformer("/model_folder", trust_remote_code=True)
+    from sentence_transformers import SentenceTransformer
+    local_model = SentenceTransformer("./model_folder", trust_remote_code=True, device = "cpu")
     embeddings = local_model.encode(chunks)
 
     similarities = local_model.similarity(embeddings, embeddings)
@@ -176,7 +177,7 @@ def main():
 
     
     client = OpenAI(api_key=openai_api_key)
-    generate_like_articles(chunks, topics_list, client)
+    # generate_like_articles(chunks, topics_list, client)
     generate_like_articles_2(chunks, topics_list)
 
 
