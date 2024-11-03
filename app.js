@@ -1,120 +1,135 @@
-class MessageQueue {
-    constructor() {
-        this.queue = [];
-        this.processing = false;
-    }
-
-    add(message) {
-        this.queue.push(message);
-        if (!this.processing) {
-            this.processQueue();
-        }
-    }
-
-    async processQueue() {
-        if (this.queue.length === 0) {
-            this.processing = false;
-            return;
-        }
-
-        this.processing = true;
-        const message = this.queue.shift();
-
-        try {
-            await wsClient.sendMessage(message);
-        } catch (error) {
-            console.error('Error sending message:', error);
-        }
-
-        setTimeout(() => this.processQueue(), 100);
-    }
-}
-
-class WebSocketClient {
-    constructor(url) {
-        this.url = url;
-        this.socket = null;
-        this.reconnectAttempts = 0;
-        this.maxReconnectAttempts = 5;
-    }
-
-    connect() {
-        this.socket = new WebSocket(this.url);
-        this.socket.onopen = this.onOpen.bind(this);
-        this.socket.onmessage = this.onMessage.bind(this);
-        this.socket.onclose = this.onClose.bind(this);
-        this.socket.onerror = this.onError.bind(this);
-    }
-
-    async sendMessage(data) {
-        if (this.socket.readyState !== WebSocket.OPEN) {
-            throw new Error('WebSocket is not connected');
-        }
-
-        const message = {
-            action: "sendQuery",
-            data: data
-        };
-
-        return new Promise((resolve, reject) => {
-            try {
-                this.socket.send(JSON.stringify(message));
-                console.log("Message sent:", message);
-                resolve();
-            } catch (error) {
-                reject(error);
-            }
-        });
-    }
-
-    onOpen() {
-        console.log("WebSocket connection established");
-        this.reconnectAttempts = 0;
-    }
-
-    onMessage(event) {
-        console.log("Message received from server:", event.data);
-        try {
-            const response = JSON.parse(event.data);
-            if (response && response.originalText) {
-                const transcriptElement = document.getElementById('transcript');
-                transcriptElement.innerText += `\nProcessed Text: ${response.originalText}`;
-            }
-        } catch (error) {
-            console.log("Received status message:", event.data);
-        }
-    }
-
-    onClose() {
-        console.log("WebSocket connection closed");
-        this.attemptReconnect();
-    }
-
-    onError(error) {
-        console.error("WebSocket error:", error);
-    }
-
-    attemptReconnect() {
-        if (this.reconnectAttempts < this.maxReconnectAttempts) {
-            this.reconnectAttempts++;
-            console.log(`Attempting to reconnect (${this.reconnectAttempts}/${this.maxReconnectAttempts})`);
-            setTimeout(() => this.connect(), 2000 * this.reconnectAttempts);
-        }
-    }
-}
-
 const apiKey = "2910a1db0e8845f79923ecbdfdb5fa72";
-const websocketURL = "wss://zzmsaapwre.execute-api.us-east-1.amazonaws.com/prod";
-const wsClient = new WebSocketClient(websocketURL);
-const messageQueue = new MessageQueue();
-wsClient.connect();
-
 let mediaRecorder;
 let recordingInterval;
 let audioChunks = [];
 let isRecording = false;
+let wordCount = 0;
+let transcriptHistory = [];
 
-// Initialize record button functionality
+class TranscriptManager {
+    constructor(wordThreshold = 50) {
+        this.wordThreshold = wordThreshold;
+        this.transcripts = [];
+        this.totalWords = 0;
+        this.visualizationCount = 0;
+    }
+
+    addTranscript(text) {
+        this.transcripts.push(text);
+        const words = text.trim().split(/\s+/).length;
+        this.totalWords += words;
+
+        console.log(`Added transcript. Total words: ${this.totalWords}`);
+
+        if (this.totalWords >= this.wordThreshold) {
+            this.generateVisualization();
+        }
+    }
+
+    async generateVisualization() {
+        try {
+            // Get all transcripts as one array
+            const allTranscripts = this.transcripts;
+
+            // Reset for next batch
+            this.transcripts = [];
+            this.totalWords = 0;
+
+            // Update status
+            document.getElementById('status').innerText = "Generating visualization...";
+
+            // Send request to Flask server
+            const response = await fetch('http://127.0.0.1:5000/execute', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify([allTranscripts])
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const data = await response.json();
+            console.log('Visualization data:', data);
+
+            // Create a new visualization section
+            this.visualizationCount++;
+            const vizContainer = document.getElementById("visualization");
+            const newSection = document.createElement('div');
+            newSection.className = 'visualization-section mb-8 p-4 bg-white rounded-lg shadow';
+
+            // Add section header with timestamp
+            const header = document.createElement('div');
+            header.className = 'text-lg font-semibold text-primary mb-4';
+            const timestamp = new Date().toLocaleTimeString();
+            header.textContent = `Visualization ${this.visualizationCount} (${timestamp})`;
+            newSection.appendChild(header);
+
+            // Add transcript for this section
+            const transcriptSection = document.createElement('div');
+            transcriptSection.className = 'mb-4 p-3 bg-gray-50 rounded';
+            transcriptSection.innerHTML = `<div class="font-medium mb-2">Transcript:</div>
+                                         <div class="text-sm text-gray-600">${allTranscripts.join(' ')}</div>`;
+            newSection.appendChild(transcriptSection);
+
+            // Render new visualizations in this section
+            data.forEach((viz, index) => {
+                if (viz.type === "image") {
+                    const img = document.createElement("img");
+                    img.src = viz.data;
+                    img.className = "w-full max-w-2xl mx-auto my-4";
+                    newSection.appendChild(img);
+                } else if (viz.type === "plotly") {
+                    const plotDiv = document.createElement("div");
+                    plotDiv.id = `plotlyChart-${this.visualizationCount}-${index}`;
+                    plotDiv.className = "w-full max-w-2xl mx-auto my-4";
+                    newSection.appendChild(plotDiv);
+                    Plotly.newPlot(plotDiv.id, viz.data, viz.layout);
+                } else if (viz.type === "text") {
+                    const textDiv = document.createElement("div");
+                    textDiv.className = "p-4 bg-gray-50 rounded my-4";
+                    textDiv.innerText = viz.data;
+                    newSection.appendChild(textDiv);
+                }
+            });
+
+            // Add divider
+            if (this.visualizationCount > 1) {
+                const divider = document.createElement('hr');
+                divider.className = 'my-8 border-t border-gray-200';
+                vizContainer.insertBefore(divider, vizContainer.firstChild);
+            }
+
+            // Add the new section at the top
+            vizContainer.insertBefore(newSection, vizContainer.firstChild);
+
+            // Update status
+            document.getElementById('status').innerText = isRecording ?
+                "Recording..." : "Recording stopped. Visualization generated.";
+
+            // Scroll to the new visualization smoothly
+            newSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+        } catch (error) {
+            console.error('Error generating visualization:', error);
+            document.getElementById('status').innerText = "Error generating visualization.";
+        }
+    }
+
+    getWordCount() {
+        return this.totalWords;
+    }
+
+    getProgress() {
+        return (this.totalWords / this.wordThreshold) * 100;
+    }
+}
+
+// Create transcript manager instance
+const transcriptManager = new TranscriptManager(50);
+
 document.addEventListener('DOMContentLoaded', () => {
     const recordButton = document.getElementById('record-button');
 
@@ -127,6 +142,12 @@ document.addEventListener('DOMContentLoaded', () => {
             recordButton.classList.remove('recording');
         }
     });
+
+    // Remove the visualize button since it's now automatic
+    const executeButton = document.getElementById('execute-button');
+    if (executeButton) {
+        executeButton.remove();
+    }
 });
 
 async function startRecording() {
@@ -149,7 +170,7 @@ async function startRecording() {
             }
 
             const audioBlob = new Blob(currentChunks, { type: 'audio/wav' });
-            transcribeAudio(audioBlob).catch(console.error);
+            await transcribeAudio(audioBlob);
         };
 
         mediaRecorder.start();
@@ -242,11 +263,17 @@ async function transcribeAudio(blob) {
         }
 
         if (transcript.text && transcript.text.trim()) {
-            document.getElementById('transcript').innerText += `\nTranscript: ${transcript.text}`;
-            messageQueue.add(transcript.text);
+            const transcriptDiv = document.getElementById('transcript');
+            transcriptDiv.innerText += `\nTranscript: ${transcript.text}`;
+
+            // Add to transcript manager
+            transcriptManager.addTranscript(transcript.text);
+
+            // Update progress status
+            const progress = transcriptManager.getProgress();
+            document.getElementById('status').innerText = `Recording... (${Math.round(progress)}% to next visualization)`;
         }
 
-        document.getElementById('status').innerText = isRecording ? "Recording..." : "Recording stopped.";
     } catch (error) {
         console.error("Transcription error:", error);
         document.getElementById('status').innerText = isRecording ?
