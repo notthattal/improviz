@@ -34,6 +34,7 @@ Before installing [Software Name], ensure that you have the following requiremen
 ### Step 2: Create API keys
 - **OpenAI**: https://platform.openai.com/docs/overview
 - **Assembly AI**: https://www.assemblyai.com/?utm_source=google&utm_medium=cpc&utm_campaign=Brand&utm_term=assembly%20ai&gad_source=1&gclid=Cj0KCQjwvpy5BhDTARIsAHSilylkKkkXkGYQ_izyrxhzAn1U8TXkefh3quwPHLLtRnszNp9YkcrAWZkaAgjhEALw_wcB
+   - Once created the AssemblyAI API Key, in the root directory create a config.js file and paste "const apiKey="{your_api_key}"; with your actual assembly api key 
 
 ### Step 3: Ensure Node and Python are properly installed
 

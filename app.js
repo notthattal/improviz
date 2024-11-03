@@ -1,4 +1,3 @@
-const apiKey = "5c1d6279cd29445e85d219fd7626b7d7";
 let mediaRecorder;
 let recordingInterval;
 let audioChunks = [];
