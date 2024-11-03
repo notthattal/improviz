@@ -11,3 +11,4 @@ plotly
 sentence-transformers
 textrazor
 wordcloud
+hdbscan
