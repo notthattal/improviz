@@ -8,8 +8,6 @@ flask
 flask_cors
 openai
 plotly
-sentence-transformers
-textrazor
 wordcloud
 hdbscan
 sentence_transformers
