@@ -26,6 +26,18 @@ class TranscriptManager {
             this.generateVisualization();
         }
     }
+    
+    insertNewSection(vizContainer, newSection, visualizationCount) {
+        // Add divider if there are multiple visualizations
+        if (visualizationCount > 1) {
+            const divider = document.createElement('hr');
+            divider.className = 'my-8 border-t border-gray-200';
+            vizContainer.insertBefore(divider, vizContainer.firstChild);
+        }
+    
+        // Insert the new section at the top
+        vizContainer.insertBefore(newSection, vizContainer.firstChild);
+    }
 
     async generateVisualization() {
         try {
@@ -82,29 +94,22 @@ class TranscriptManager {
                     img.src = viz.data;
                     img.className = "w-full max-w-2xl mx-auto my-4";
                     newSection.appendChild(img);
+                    this.insertNewSection(vizContainer, newSection, this.visualizationCount);
                 } else if (viz.type === "plotly") {
                     const plotDiv = document.createElement("div");
                     plotDiv.id = `plotlyChart-${this.visualizationCount}-${index}`;
                     plotDiv.className = "w-full max-w-2xl mx-auto my-4";
                     newSection.appendChild(plotDiv);
+                    this.insertNewSection(vizContainer, newSection, this.visualizationCount);
                     Plotly.newPlot(plotDiv.id, viz.data, viz.layout);
                 } else if (viz.type === "text") {
                     const textDiv = document.createElement("div");
                     textDiv.className = "p-4 bg-gray-50 rounded my-4";
                     textDiv.innerText = viz.data;
                     newSection.appendChild(textDiv);
+                    this.insertNewSection(vizContainer, newSection, this.visualizationCount);
                 }
             });
-
-            // Add divider
-            if (this.visualizationCount > 1) {
-                const divider = document.createElement('hr');
-                divider.className = 'my-8 border-t border-gray-200';
-                vizContainer.insertBefore(divider, vizContainer.firstChild);
-            }
-
-            // Add the new section at the top
-            vizContainer.insertBefore(newSection, vizContainer.firstChild);
 
             // Update status
             document.getElementById('status').innerText = isRecording ?
