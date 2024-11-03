@@ -8,6 +8,7 @@ import json
 import openai
 import os
 import re
+from datetime import datetime
 
 matplotlib.use('Agg')
 
@@ -18,6 +19,8 @@ def convert_ndarray(obj):
         return {k: convert_ndarray(v) for k, v in obj.items()}
     elif isinstance(obj, list):
         return [convert_ndarray(i) for i in obj]
+    elif isinstance(obj, datetime):
+            return obj.isoformat()
     else:
         return obj
 
@@ -48,9 +51,9 @@ def process_response(response_text):
         try:
             return create_plot(code)
         except Exception as e:
-            return f"Error during execution: {e}"
+            return {"type": "error", "data": f"Error during execution: {e}"}
     else:
-        return response_text
+        return {"type": "text", "data": response_text}
 
 valid_visualizers = [
     "Line Plot", "Bar Chart", "Histogram", "Scatter Plot",
@@ -58,7 +61,7 @@ valid_visualizers = [
     "Violin Plot", "Pair Plot", "Timeline Plot", "Word Cloud", "Venn Diagram", "Flow Chart"
 ]
 
-valid_packages = ['matplotlib', 'plotly', 'pandas', 'numpy', 'scikit-learn', 'seaborn', 'statsmodels']
+valid_packages = ['matplotlib', 'plotly.express', 'pandas', 'numpy', 'scikit-learn', 'seaborn', 'statsmodels']
 
 openai.api_key = os.getenv("OPENAI_API_KEY")
 client = openai.OpenAI()
@@ -102,6 +105,9 @@ def get_visualizations_json(data):
         code = ""
 
     visualization_result = process_response(code)
+    if visualization_result["type"] == "error":
+        raise Exception(visualization_result["data"])
+    
     visualization_result["summary"] = summary
     results.append(visualization_result)
 
